@@ -42,45 +42,18 @@ var H$ = {};
             }
         }
 
-        // Private helper function
-        var initNewBackgroundImage = function HexGrid_initNewBackgroundImage(grid, path){
-            // Generate unique id for new pattern
-            var id = grid.getDOMClass() + "-bg-" + (SIZEOF(grid.patterns) + 1);
-            d3.select("." + grid.getDOMClass() + " defs")
-                .append("svg:pattern")
-                .attr("id", id)
-                .attr("width", 1)
-                .attr("height", 1)
-                .append("svg:image")
-                .attr("xlink:href", path)
-                .attr("x", 0)
-                .attr("y", 0)
-                .attr("width", grid.getHexagonSize() * 2)
-                .attr("height", grid.getHexagonSize() * 2);
-            grid.patterns[path] = id;
-        };
-
         // TODO: preloadAsset, specify path and size.
         // Centered automatically when rendered. Cap size at hex size.
         // Should probably make Asset a public class.
 
         function HexGrid_preloadBackgroundImage(path){
-            if(this.patterns[path] == null){
+            if(this.patterns[path] === null){
                 initNewBackgroundImage(this, path);
             }
         }
 
-        function HexGrid_addBackgroundImage(q, r, path){
-            var coords = new Point(q, r);
-            if(this.grid[coords] == null) throw "exception: attempting to set background image of nonexistent hexagon!";
-            if(this.patterns[path] == null){
-                initNewBackgroundImage(this, path);
-            }
-            this.grid[coords].setFill("url(#" + this.patterns[path] + ")");
-        }
-
-        function HexGrid_addBackgroundImageToAll(path){
-            if(this.patterns[path] == null){
+        function HexGrid_setGlobalBackgroundImage(path){
+            if(this.patterns[path] === null){
                 initNewBackgroundImage(this, path);
             }
             for (var pointStr in this.grid){
@@ -89,17 +62,17 @@ var H$ = {};
             }
         }
 
-        function HexGrid_addBackgroundColor(q, r, css){
-            var coords = new Point(q, r);
-            if(this.grid[coords] == null) throw "exception: attempting to set background color of nonexistent hexagon!";
-            this.grid[coords].setFill(css);
-        }
-
-        function HexGrid_addBackgroundColorToAll(css){
+        function HexGrid_setGlobalBackgroundColor(css){
             for (var pointStr in this.grid){
                 if(!this.grid.hasOwnProperty(pointStr)) continue;
                 this.grid[pointStr].setFill(css);
             }
+        }
+
+        function HexGrid_get(q, r){
+            var coords = new Point(q, r);
+            if(this.grid[coords] === null) throw "exception: attempting to get nonexistent hexagon!";
+            return this.grid[coords]
         }
 
         //TODO: set gridline colors, both globally and individually (for walls etc)
@@ -108,10 +81,9 @@ var H$ = {};
             add: HexGrid_add,
             drawAll: HexGrid_drawAll,
             preloadBackgroundImage: HexGrid_preloadBackgroundImage,
-            addBackgroundImage: HexGrid_addBackgroundImage,
-            addBackgroundImageToAll: HexGrid_addBackgroundImageToAll,
-            addBackgroundColor: HexGrid_addBackgroundColor,
-            addBackgroundColorToAll: HexGrid_addBackgroundColorToAll
+            setGlobalBackgroundImage: HexGrid_setGlobalBackgroundImage,
+            setGlobalBackgroundColor: HexGrid_setGlobalBackgroundColor,
+            get: HexGrid_get
         };
 
         /* Begin private HexGrid functions */
@@ -132,7 +104,57 @@ var H$ = {};
 
     })();
 
-    /* Begin helper classes */
+    /* Begin public helper classes */
+
+    /**
+     * A simple wrapper around the necessary information to add an asset.
+     * @constructor
+     */
+    var Asset = function(path, width, height){
+        function Asset_path(){ return path; }
+        this.path = Asset_path;
+
+        function Asset_width(){ return width; }
+        this.width = Asset_width;
+
+        function Asset_height(){ return height; }
+        this.height = Asset_height;
+    };
+    H$.Asset = Asset;
+
+    var Payload = function(data, asset){
+        this.data = data;
+        this.asset = asset;
+    };
+    (function(){
+        function Payload_data(){
+            return this.data;
+        }
+
+        function Payload_setData(data){
+            this.data = data;
+        }
+
+        function Payload_asset(){
+            return this.asset;
+        }
+
+        function Payload_setAsset(asset){
+            this.asset = asset;
+        }
+
+        Payload.prototype = {
+            data: Payload_data,
+            setData: Payload_setData,
+            asset: Payload_asset,
+            setAsset: Payload_setAsset
+        }
+    })();
+    H$.Payload = Payload;
+
+    /* End public classes */
+    /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+    /* Begin private-constructor helper classes */
 
     /**
      * A class that manages the details
@@ -140,52 +162,66 @@ var H$ = {};
      * hexagon.
      * @param grid
      * @param c
+     * @param coords
      * @constructor
      */
-    var Hexagon = function Hexagon(grid, c, coords) {
-        // Sets up the vertices
-        var s = grid.getHexagonSize();
-        var r = Math.cos(Math.PI / 6.0) * s;
-        var h = s / 2;
-        //calculate all vertices by offset from center, starting at top and going clockwise
-        var vertices = [
-            c.next(0, -s),
-            c.next(r, -h),
-            c.next(r, h),
-            c.next(0, s),
-            c.next(-r, h),
-            c.next(-r, -h)
-        ];
-        function Hexagon_vertices(){ return vertices; }
-        this.vertices = Hexagon_vertices;
+    var Hexagon = function(grid, c, coords) {
+        this.grid = grid;
 
         function Hexagon_center(){ return c; }
         this.center = Hexagon_center;
 
-        function Hexagon_size(){ return s; }
-        this.size = Hexagon_size;
+        function Hexagon_getLocation(){ return coords; }
+        this.location = Hexagon_getLocation;
 
-        var height = 2 * s;
-        function Hexagon_height(){ return height; }
-        this.height = Hexagon_height;
-
-        var width = 2 * r;
-        function Hexagon_width(){ return width; }
-        this.width = Hexagon_width;
-
-        var gridClass = grid.getDOMClass();
-        function Hexagon_getGridClass(){ return gridClass; }
-        this.getGridClass = Hexagon_getGridClass;
-
-        var hexClass = gridClass + "-" + c.toString().replace(",", "-");
-        function Hexagon_getHexClass(){ return hexClass; }
-        this.getHexClass = Hexagon_getHexClass;
-
-        this.core = new HexagonCore(coords);
         this.fill = null;
+
+        this.payload = new Payload(null, null);
     };
 
     (function(){
+        // Private helper
+        var calcR = function(s){
+            return Math.cos(Math.PI / 6.0) * s;
+        };
+
+        function Hexagon_vertices(){
+            // Sets up the vertices
+            var s = this.size();
+            var r = calcR(s);
+            var h = s / 2;
+            var c = this.center();
+            //calculate all vertices by offset from center, starting at top and going clockwise
+            var vertices = [
+                c.next(0, -s),
+                c.next(r, -h),
+                c.next(r, h),
+                c.next(0, s),
+                c.next(-r, h),
+                c.next(-r, -h)
+            ];
+            return vertices;
+        }
+
+        function Hexagon_height(){
+            return 2 * this.size();
+        }
+
+        function Hexagon_width(){
+            return 2 * calcR(this.size());
+        }
+
+        function Hexagon_size(){
+            return this.grid.getHexagonSize();
+        }
+
+        function Hexagon_getGridClass(){
+            return this.grid.getDOMClass();
+        }
+
+        function Hexagon_getHexClass(){
+            return this.grid.getDOMClass() + "-" + this.center().toString().replace(",", "-");
+        }
 
         function Hexagon_draw(){
             // Eventual TODO: remove d3 dependency
@@ -195,30 +231,66 @@ var H$ = {};
                 .attr("points", this.vertices().join(" "))
                 .style("stroke", "black")
                 .style("fill", (this.fill != null ? this.fill : "none"));
+
+            var assetClass = this.getHexClass() + "-asset";
+            var asset = this.payload.asset;
+            d3.select("." + assetClass).remove();
+            if(asset != null){
+                d3.select("." + this.getGridClass()).append("svg:image")
+                    .attr("class", assetClass)
+                    .attr("xlink:href", asset.path())
+                    .attr("width", asset.width())
+                    .attr("height", asset.height())
+                    .attr("x", this.center().x() - (asset.width() / 2.0))
+                    .attr("y", this.center().y() - (asset.height() / 2.0));
+            }
+            return this;
         }
 
-        function Hexagon_setFill(fill){
-            this.fill = fill;
+        function Hexagon_setBackgroundImage(path){
+            if(this.grid.patterns[path] === undefined){
+                initNewBackgroundImage(this.grid, path);
+            }
+            this.fill = "url(#" + this.grid.patterns[path] + ")";
+            return this;
+        }
+
+        function Hexagon_setBackgroundColor(css){
+            this.fill = css;
+            return this;
+        }
+
+        function Hexagon_setPayload(payload){
+            if(payload === null) this.payload = new Payload(null, null);
+            else this.payload = payload;
+            return this;
+        }
+
+        function Hexagon_payload(){
+            return this.payload;
+        }
+
+        function Hexagon_popPayload(){
+            var payload = this.payload;
+            this.payload = new Payload(null, null);
+            return payload;
         }
 
         Hexagon.prototype = {
+            vertices: Hexagon_vertices,
+            height: Hexagon_height,
+            width: Hexagon_width,
+            size: Hexagon_size,
+            getGridClass: Hexagon_getGridClass,
+            getHexClass: Hexagon_getHexClass,
             draw: Hexagon_draw,
-            setFill: Hexagon_setFill
+            setBackgroundImage: Hexagon_setBackgroundImage,
+            setBackgroundColor: Hexagon_setBackgroundColor,
+            payload: Hexagon_payload,
+            setPayload: Hexagon_setPayload,
+            popPayload: Hexagon_popPayload
         }
     })();
-
-    /**
-     * A class that contains the pieces of the Hexagon class
-     * exposed to the client.
-     * @constructor
-     */
-    var HexagonCore = function HexagonCore(location){
-        function HexagonCore_getLocation(){ return location; }
-        this.location = HexagonCore_getLocation;
-
-        // TODO: make payload an object whose constructor takes an object that just gets spit back out and an optional asset
-        this.payload = null;
-    };
 
     /**
      * A simple immutable Point class with a hashable
@@ -227,7 +299,7 @@ var H$ = {};
      * @param y
      * @constructor
      */
-    var Point = function Point(x, y){
+    var Point = function(x, y){
         function Point_x(){ return x; }
         function Point_y(){ return y; }
 
@@ -260,12 +332,29 @@ var H$ = {};
     /* End helper classes */
     /* Begin misc utilities */
 
-    var SIZEOF = function sizeOf(obj){
+    var SIZEOF = function(obj){
         var size = 0;
         for(var key in obj){
             if(obj.hasOwnProperty(key)) size++;
         }
         return size;
+    };
+
+    var initNewBackgroundImage = function (grid, path){
+        // Generate unique id for new pattern
+        var id = grid.getDOMClass() + "-bg-" + (SIZEOF(grid.patterns) + 1);
+        d3.select("." + grid.getDOMClass() + " defs")
+            .append("svg:pattern")
+            .attr("id", id)
+            .attr("width", 1)
+            .attr("height", 1)
+            .append("svg:image")
+            .attr("xlink:href", path)
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", grid.getHexagonSize() * 2)
+            .attr("height", grid.getHexagonSize() * 2);
+        grid.patterns[path] = id;
     };
 
     var DIRECTION = Object.freeze({
@@ -290,10 +379,9 @@ function demo(){
         }
     }
     testGrid.drawAll();
-    testGrid.addBackgroundImage(0, 0, "http://placekitten.com/g/300/300");
-    testGrid.addBackgroundImage(1, 0, "http://placekitten.com/g/200/200");
-    testGrid.addBackgroundImageToAll("http://placekitten.com/g/300/300");
-    //testGrid.addBackgroundColorToAll("#0f0");
-    testGrid.addBackgroundColor(0, 0, "#f00");
+    testGrid.get(0, 0).setBackgroundImage("http://placekitten.com/g/300/300");
+    testGrid.get(1, 0).setBackgroundImage("http://placekitten.com/g/200/200");
     testGrid.drawAll();
+    testGrid.get(0 ,1).setBackgroundColor("#f00").setPayload(new H$.Payload(null, new H$.Asset("http://placekitten.com/50/50", 50, 50))).draw();
+
 }
