@@ -3,7 +3,15 @@
 <head>
     <title>Chinese Checkers!</title>
 </head>
-<body>
-
+<body onload="chinese_checkers()">
+    <div class="content">
+        <svg width="960px" height="960px" class="chinese-checkers-svg"></svg>
+    </div>
+    <style type="text/css">
+        .content { text-align: center; }
+    </style>
+    <script src="d3.v3.min.js" charset="utf-8"></script>
+    <script src="hex.js"></script>
+    <script src="chinese_checkers.js"></script>
 </body>
 </html>

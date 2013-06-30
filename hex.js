@@ -83,6 +83,7 @@ var H$ = {};
                 this.grid[pointStr].undraw();
                 delete this.grid[pointStr];
             }
+            return this;
         }
 
         function HexGrid_drawAll(){
@@ -90,6 +91,7 @@ var H$ = {};
                 if(!this.grid.hasOwnProperty(pointStr)) continue;
                 this.grid[pointStr].draw();
             }
+            return this;
         }
 
         // TODO: preloadAsset, specify path and size.
@@ -100,6 +102,7 @@ var H$ = {};
             if(this.patterns[path] === undefined){
                 initNewBackgroundImage(this, path);
             }
+            return this;
         }
 
         function HexGrid_setGlobalBackgroundImage(path){
@@ -110,6 +113,7 @@ var H$ = {};
                 if(!this.grid.hasOwnProperty(pointStr)) continue;
                 this.grid[pointStr].fill = "url(#" + this.patterns[path] + ")";
             }
+            return this;
         }
 
         function HexGrid_setGlobalBackgroundColor(css){
@@ -117,6 +121,7 @@ var H$ = {};
                 if(!this.grid.hasOwnProperty(pointStr)) continue;
                 this.grid[pointStr].setBackgroundColor(css);
             }
+            return this;
         }
 
         function HexGrid_get(q, r){
@@ -271,10 +276,7 @@ var H$ = {};
     };
 
     (function(){
-        // Private helper
-        var calcR = function(s){
-            return Math.cos(Math.PI / 6.0) * s;
-        };
+
 
         function Hexagon_vertices(){
             // Sets up the vertices
@@ -524,9 +526,14 @@ var H$ = {};
         return size;
     };
 
+    var calcR = function(s){
+        return Math.cos(Math.PI / 6.0) * s;
+    };
+
     var initNewBackgroundImage = function (grid, path){
         // Generate unique id for new pattern
         var id = grid.getDOMClass() + "-bg-" + (SIZEOF(grid.patterns) + 1);
+        var s = grid.getHexagonSize();
         d3.select("." + grid.getDOMClass() + " defs")
             .append("svg:pattern")
             .attr("id", id)
@@ -534,10 +541,11 @@ var H$ = {};
             .attr("height", 1)
             .append("svg:image")
             .attr("xlink:href", path)
-            .attr("x", 0)
+            // Centers a square background in the hexagon
+            .attr("x", (calcR(s) - s))
             .attr("y", 0)
-            .attr("width", grid.getHexagonSize() * 2)
-            .attr("height", grid.getHexagonSize() * 2);
+            .attr("width", s * 2)
+            .attr("height", s * 2);
         grid.patterns[path] = id;
     };
 
