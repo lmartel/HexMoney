@@ -22,7 +22,6 @@ function demo(){
         // Chop that first comma
         coords = coords.replace(",", "");
         d3.select(".result-code")
-            .attr("rows", Math.max(5, 2 + Math.floor(count / 8)))
             .text(prefix + coords + suffix);
     };
     emitCode();
