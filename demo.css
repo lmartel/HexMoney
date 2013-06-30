@@ -1,0 +1,20 @@
+body {
+    font-family: "Helvetica", "Arial", sans-serif;
+}
+
+textarea {
+    font-family: "Courier New", "Courier", "Helvetica", "Arial", sans-serif;
+}
+.result-code {
+    width: 60%;
+    min-width: 700px;
+    font-size: 18px;
+}
+.content {
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+}
+h3 {
+    margin-bottom: 5px;
+}

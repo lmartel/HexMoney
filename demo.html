@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HexGrid Demo</title>
+    <link href="demo.css" rel="stylesheet">
+</head>
+<body onload="demo()">
+    <div class="content">
+        <h1>Welcome to the HexGrid GUI tool!</h1>
+        <h2>Click the board below to change your selection. The * denotes the origin at axial coordinates (0,0).</h2>
+        <h3>Use this code to quickly add the currently selected hexagons to a HexGrid:</h3>
+        <textarea class="result-code"></textarea>
+        <br>
+        <svg width="700" height="700" class="demo-svg"></svg>
+        <svg width="700" height="700" class="result-svg"></svg>
+    </div>
+
+    <script src="d3.v3.min.js" charset="utf-8"></script>
+    <script src="hex.js"></script>
+    <script src="demo.js"></script>
+</body>
+</html>
