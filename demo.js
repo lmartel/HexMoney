@@ -26,7 +26,7 @@ function demo(){
     };
     emitCode();
 
-    d3.select("svg").on("click", function(){
+    d3.select("." + demoGrid.getDOMClass()).on("click", function(){
         var click = d3.mouse(this);
         var clicked = demoGrid.getAt(click[0], click[1]);
         if(clicked != null){

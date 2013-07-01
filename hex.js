@@ -386,6 +386,10 @@ var H$ = {};
             return this.payload;
         }
 
+        function Hexagon_getPayloadData(){
+            return this.payload.getData();
+        }
+
         /**
          * A shortcut function that clears the hexagon's payload,
          * redraws it (unless false is passed as a parameter),
@@ -444,11 +448,26 @@ var H$ = {};
             return neighbors;
         }
 
-        function Hexagon_getDirectionTo(neighbor){
-            var offset = neighbor.getLocation().subtract(this.getLocation());
-            var dir = DIRECTION[offset];
-            if(dir === undefined) throw "exception: getDirectionTo currently finds only adjacent neighbors";
-            return dir;
+        /**
+         * These two functions look for straight lines between two hexagons.
+         */
+        function Hexagon_getDirectionTo(finish){
+            var delta = finish.getLocation().subtract(this.getLocation());
+            for(var i = DIRECTION.START; i < DIRECTION.END; i++){
+                var q = delta.divide(DIRECTION[i].offset);
+                if(q != null) return DIRECTION[i];
+            }
+            return null;
+        }
+
+        function Hexagon_getStraightLineDistanceTo(finish){
+            var delta = finish.getLocation().subtract(this.getLocation());
+            for(var i = DIRECTION.START; i < DIRECTION.END; i++){
+                console.log(DIRECTION[i].name);
+                var q = delta.divide(DIRECTION[i].offset);
+                if(q != null) return Math.abs(q);
+            }
+            return null;
         }
 
         Hexagon.prototype = {
@@ -464,12 +483,14 @@ var H$ = {};
             setBackgroundImage: Hexagon_setBackgroundImage,
             setBackgroundColor: Hexagon_setBackgroundColor,
             getPayload: Hexagon_getPayload,
+            getPayloadData: Hexagon_getPayloadData,
             setPayload: Hexagon_setPayload,
             popPayload: Hexagon_popPayload,
             movePayload: Hexagon_movePayload,
             getNeighbor: Hexagon_getNeighbor,
             getNeighbors: Hexagon_getNeighbors,
-            getDirectionTo: Hexagon_getDirectionTo
+            getDirectionTo: Hexagon_getDirectionTo,
+            getStraightLineDistanceTo: Hexagon_getStraightLineDistanceTo
         }
     })();
 
@@ -504,6 +525,26 @@ var H$ = {};
             return new Point(this.x() - pt2.x(), this.y() - pt2.y());
         }
 
+        /**
+         * If this point is a scalar multiple of the given point,
+         * returns that scalar. Otherwise, returns null. We do some
+         * fiddling to allow "dividing" by zero so that (0,2) / (0,1) = 2
+         */
+        function Point_divide(pt2){
+
+            function psuedoDivide(a, b){
+                if(a === 0 && b === 0) return 0;
+                else if(a === 0 || b === 0) return null;
+                else return a / b;
+            }
+
+            var qx = psuedoDivide(this.x(), pt2.x());
+            var qy = psuedoDivide(this.y(), pt2.y());
+
+            if((qx >= 0 && qy >= 0) && (qx === 0 || qy === 0 || qx === qy) && qx === Math.round(qx) && qy === Math.round(qy)) return Math.max(qx, qy);
+            return null;
+        }
+
         function Point_toString(){
             return Math.round(this.x()) + "," + Math.round(this.y());
         }
@@ -511,6 +552,7 @@ var H$ = {};
             next: Point_next,
             add: Point_add,
             subtract: Point_subtract,
+            divide: Point_divide,
             toString: Point_toString
         };
     })();
