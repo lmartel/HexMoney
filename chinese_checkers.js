@@ -1,10 +1,10 @@
-function chinese_checkers(svgClass, announceClass){
-    var game = new cc.Game(svgClass, announceClass);
+function chinese_checkers(nPlayers, svgClass, announceClass){
+    var game = new cc.Game(nPlayers, svgClass, announceClass);
     game.start();
 }
 
 var cc = {};
-cc.Game = function(svgClass, announceClass){
+cc.Game = function(nPlayers, svgClass, announceClass){
 
     /* Created using my GUI Hex board tool at {@link} */
     var BOARD = [
@@ -27,6 +27,14 @@ cc.Game = function(svgClass, announceClass){
     this.SELECT_COLOR = "green";
     this.ERROR_COLOR = "red";
     this.ANNOUNCE = announceClass;
+    switch(nPlayers){
+        case 2: this.players = [cc.Player.NORTH, cc.Player.SOUTH]; break;
+        case 3: this.players = [cc.Player.NORTHWEST, cc.Player.NORTHEAST, cc.Player.SOUTH]; break;
+        case 4: this.players = [cc.Player.NORTHWEST, cc.Player.NORTHEAST, cc.Player.SOUTHEAST, cc.Player.SOUTHWEST]; break;
+        case 6: this.players = [cc.Player.NORTH, cc.Player.NORTHEAST, cc.Player.SOUTHEAST,
+            cc.Player.SOUTH, cc.Player.SOUTHWEST, cc.Player.NORTHWEST]; break;
+        default: throw "BadNumberOfPlayersException";
+    }
 
     var board = new H$.HexGrid(480, 420, 32, svgClass);
     board.addMany(BOARD).setGlobalBackgroundImage(this.BACKGROUND).drawAll();
@@ -38,23 +46,24 @@ cc.Game = function(svgClass, announceClass){
     var payloadNorthwest = cc.makePayload(cc.Player.NORTHWEST);
     for(var i = 0; i < cc.Player.NORTHWEST.corner.length; i++){
         var pair = cc.Player.NORTHWEST.corner[i];
-        board.get(pair[0], pair[1]).setPayload(payloadNorthwest);
-        board.get(-pair[0], -pair[1]).setPayload(payloadSoutheast);
+        if(this.players.indexOf(cc.Player.NORTHWEST) != -1) board.get(pair[0], pair[1]).setPayload(payloadNorthwest);
+        if(this.players.indexOf(cc.Player.SOUTHEAST) != -1) board.get(-pair[0], -pair[1]).setPayload(payloadSoutheast);
     }
     for(var i = 0; i < cc.Player.NORTH.corner.length; i++){
         var pair = cc.Player.NORTH.corner[i];
-        board.get(pair[0], pair[1]).setPayload(payloadNorth);
-        board.get(-pair[0], -pair[1]).setPayload(payloadSouth);
+        if(this.players.indexOf(cc.Player.NORTH) != -1) board.get(pair[0], pair[1]).setPayload(payloadNorth);
+        if(this.players.indexOf(cc.Player.SOUTH) != -1) board.get(-pair[0], -pair[1]).setPayload(payloadSouth);
     }
     for(var i = 0; i < cc.Player.NORTHEAST.corner.length; i++){
         var pair = cc.Player.NORTHEAST.corner[i];
-        board.get(pair[0], pair[1]).setPayload(payloadNortheast);
-        board.get(-pair[0], -pair[1]).setPayload(payloadSouthwest);
+        if(this.players.indexOf(cc.Player.NORTHEAST) != -1) board.get(pair[0], pair[1]).setPayload(payloadNortheast);
+        if(this.players.indexOf(cc.Player.SOUTHWEST) != -1) board.get(-pair[0], -pair[1]).setPayload(payloadSouthwest);
     }
     board.drawAll();
 
     this.board = board;
-    this.players = [cc.Player.NORTH, cc.Player.SOUTH];
+
+
     // this.players = [cc.Player.NORTH, cc.Player.SOUTHEAST, cc.Player.SOUTH, cc.Player.NORTHWEST];
 };
 (function Game_init(){
