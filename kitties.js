@@ -7,11 +7,8 @@ function kitties(){
     testGrid.drawAll();
 
     var brownianKitty = function(hex){
-        var next = null;
-        while(next === null){
-            var randomDir = Math.floor(Math.random() * 6);
-            next = hex.getNeighbor(H$.DIRECTION[randomDir]);
-        }
+        var neighbors = hex.getNeighbors();
+        var next = neighbors[Math.floor(Math.random() * neighbors.length)];
         hex.movePayload(next, {
             duration: 1600,
             callback: function(target){
