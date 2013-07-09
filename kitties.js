@@ -3,7 +3,7 @@ function kitties(){
     testGrid.addMegahex(0, 0, 7);
     testGrid.setGlobalBackgroundImage("http://placekitten.com/200/200");
     testGrid.get(0, 0).setBackgroundImage("http://placekitten.com/g/200/200");
-    testGrid.get(0 ,0).setPayload(new H$.Payload(null, new H$.Asset("http://placekitten.com/80/80", 80, 80)));
+    testGrid.get(0 ,0).setPayload(new H$.Payload(null, new H$.Asset("http://placekitten.com/101/101", 80, 80)));
     testGrid.drawAll();
 
     var brownianKitty = function(hex){

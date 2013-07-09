@@ -22,7 +22,7 @@ var cc = {
 };
 
 cc.initEmpty = function(svgClass){
-    (new H$.HexGrid(480, 420, 32, svgClass)).addMany(cc.BOARD).setGlobalBackgroundImage(cc.BACKGROUND).drawAll();
+    (new H$.HexGrid(480, 420, 28, svgClass)).addMany(cc.BOARD).setGlobalBackgroundImage(cc.BACKGROUND).drawAll();
 }
 
 cc.startGame = function(form, radio, svgClass, announceClass){
@@ -48,7 +48,7 @@ cc.Game = function(nPlayers, svgClass, announceClass){
         default: throw "BadNumberOfPlayersException";
     }
 
-    var board = new H$.HexGrid(480, 420, 32, svgClass);
+    var board = new H$.HexGrid(480, 420, 28, svgClass);
     board.addMany(cc.BOARD).setGlobalBackgroundImage(cc.BACKGROUND).drawAll();
     var payloadNorth = cc.makePayload(cc.Player.NORTH); //TODO: add this to grid class?
     var payloadNortheast = cc.makePayload(cc.Player.NORTHEAST);

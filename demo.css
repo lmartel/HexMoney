@@ -1,5 +1,6 @@
 body {
     font-family: "Helvetica", "Arial", sans-serif;
+    margin-bottom: 40px;
 }
 
 textarea {
@@ -17,4 +18,14 @@ textarea {
 }
 h3 {
     margin-bottom: 5px;
+}
+
+footer {
+    width: 100%;
+    position: fixed;
+    text-align: center;
+    border-top: 1px solid black;
+    padding: 10px 0;
+    background: #ddd;
+    bottom: 0;
 }
