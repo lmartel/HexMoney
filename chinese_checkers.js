@@ -1,13 +1,6 @@
-function chinese_checkers(nPlayers, svgClass, announceClass){
-    var game = new cc.Game(nPlayers, svgClass, announceClass);
-    game.start();
-}
-
-var cc = {};
-cc.Game = function(nPlayers, svgClass, announceClass){
-
+var cc = {
     /* Created using my GUI Hex board tool at {@link} */
-    var BOARD = [
+    BOARD: [
         [0,0],[-1,1],[-1,0],[0,-1],[1,-1],[1,0],[0,1],[-2,2],[-1,2],
         [0,2],[1,1],[2,0],[2,-1],[2,-2],[1,-2],[0,-2],[-1,-1],[-2,0],
         [-2,1],[-3,2],[-3,1],[-3,0],[-2,-2],[-2,-1],[0,-3],[-1,-2],
@@ -21,11 +14,30 @@ cc.Game = function(nPlayers, svgClass, announceClass){
         [5,-1],[4,1],[4,2],[4,3],[4,4],[3,4],[2,4],[1,4],[-1,5],[-2,6],[-3,7],
         [-4,8],[-4,7],[-4,6],[-4,5],[-5,4],[-6,4],[-7,4],[-8,4],[-7,3],[-6,2],
         [-5,1],[-4,-1],[-4,-2],[-4,-3],[-4,-4],[-3,-4],[-2,-4],[-1,-4]
-    ];
+    ],
 
-    this.BACKGROUND = "wood.png";
-    this.SELECT_COLOR = "green";
-    this.ERROR_COLOR = "red";
+    BACKGROUND: "wood.png",
+    SELECT_COLOR: "green",
+    ERROR_COLOR: "red"
+};
+
+cc.initEmpty = function(svgClass){
+    (new H$.HexGrid(480, 420, 32, svgClass)).addMany(cc.BOARD).setGlobalBackgroundImage(cc.BACKGROUND).drawAll();
+}
+
+cc.startGame = function(form, radio, svgClass, announceClass){
+    var buttons = form[radio];
+    for(var i = 0; i < buttons.length; i++){
+        if(buttons[i].checked){
+            (new cc.Game(parseInt(buttons[i].value), svgClass, announceClass)).start();
+            break;
+        }
+    }
+    return false;
+}
+
+cc.Game = function(nPlayers, svgClass, announceClass){
+
     this.ANNOUNCE = announceClass;
     switch(nPlayers){
         case 2: this.players = [cc.Player.NORTH, cc.Player.SOUTH]; break;
@@ -37,7 +49,7 @@ cc.Game = function(nPlayers, svgClass, announceClass){
     }
 
     var board = new H$.HexGrid(480, 420, 32, svgClass);
-    board.addMany(BOARD).setGlobalBackgroundImage(this.BACKGROUND).drawAll();
+    board.addMany(cc.BOARD).setGlobalBackgroundImage(cc.BACKGROUND).drawAll();
     var payloadNorth = cc.makePayload(cc.Player.NORTH); //TODO: add this to grid class?
     var payloadNortheast = cc.makePayload(cc.Player.NORTHEAST);
     var payloadSoutheast = cc.makePayload(cc.Player.SOUTHEAST);
@@ -63,9 +75,8 @@ cc.Game = function(nPlayers, svgClass, announceClass){
 
     this.board = board;
 
-
-    // this.players = [cc.Player.NORTH, cc.Player.SOUTHEAST, cc.Player.SOUTH, cc.Player.NORTHWEST];
 };
+
 (function Game_init(){
     //for(var i = 0; /* until win */; i = (i + 1) % this.players.length){
 
@@ -84,7 +95,7 @@ cc.Game = function(nPlayers, svgClass, announceClass){
             if(clicked != null && clicked.getPayloadData() != null){
                 if(clicked.getPayloadData().getPlayer() === game.players[active]){
                     selected = clicked;
-                    selected.setBackgroundColor(game.SELECT_COLOR).draw();
+                    selected.setBackgroundColor(cc.SELECT_COLOR).draw();
                     firstMove = true;
                     listenFor(secondClick);
                 }
@@ -104,14 +115,14 @@ cc.Game = function(nPlayers, svgClass, announceClass){
         function clickedOnPiece(clicked){
             if(clicked.getPayloadData().getPlayer() === game.players[active]){
                 if(clicked === selected){
-                    selected.setBackgroundImage(game.BACKGROUND).draw();
+                    selected.setBackgroundImage(cc.BACKGROUND).draw();
                     selected = null;
                     // De-selecting piece during a jump ends the turn
                     if(!firstMove) nextPlayer();
                     listenFor(firstClick);
                 } else if(firstMove){
-                    selected.setBackgroundImage(game.BACKGROUND).draw();
-                    selected = clicked.setBackgroundColor(game.SELECT_COLOR).draw();
+                    selected.setBackgroundImage(cc.BACKGROUND).draw();
+                    selected = clicked.setBackgroundColor(cc.SELECT_COLOR).draw();
                 } else {
                     nope(clicked);
                 }
@@ -124,12 +135,12 @@ cc.Game = function(nPlayers, svgClass, announceClass){
             var delta = selected.getStraightLineDistanceTo(clicked);
             if(delta != null){
                 if(delta === 1 && firstMove){
-                    selected.setBackgroundImage(game.BACKGROUND).draw();
-                    clicked.setBackgroundColor(game.SELECT_COLOR).draw();
+                    selected.setBackgroundImage(cc.BACKGROUND).draw();
+                    clicked.setBackgroundColor(cc.SELECT_COLOR).draw();
                     listenFor(null);
                     selected.movePayload(clicked, {
                         callback: function(){
-                            clicked.setBackgroundImage(game.BACKGROUND).draw();
+                            clicked.setBackgroundImage(cc.BACKGROUND).draw();
                             nextPlayer();
                             listenFor(firstClick);
                         }
@@ -138,8 +149,8 @@ cc.Game = function(nPlayers, svgClass, announceClass){
                     var dir = selected.getDirectionTo(clicked);
                     var middle = selected.getNeighbor(dir);
                     if(middle != null && middle.getPayloadData() != null){
-                        selected.setBackgroundImage(game.BACKGROUND).draw();
-                        clicked.setBackgroundColor(game.SELECT_COLOR).draw();
+                        selected.setBackgroundImage(cc.BACKGROUND).draw();
+                        clicked.setBackgroundColor(cc.SELECT_COLOR).draw();
                         listenFor(null);
                         selected.movePayload(clicked, {
                             callback: function(){
@@ -189,9 +200,9 @@ cc.Game = function(nPlayers, svgClass, announceClass){
         }
 
         function nope(clicked){
-            clicked.setBackgroundColor(game.ERROR_COLOR).draw();
+            clicked.setBackgroundColor(cc.ERROR_COLOR).draw();
             setTimeout(function(){
-                clicked.setBackgroundImage(game.BACKGROUND).draw();
+                clicked.setBackgroundImage(cc.BACKGROUND).draw();
             }, 400);
         }
 
