@@ -463,7 +463,6 @@ var H$ = {};
         function Hexagon_getStraightLineDistanceTo(finish){
             var delta = finish.getLocation().subtract(this.getLocation());
             for(var i = DIRECTION.START; i < DIRECTION.END; i++){
-                console.log(DIRECTION[i].name);
                 var q = delta.divide(DIRECTION[i].offset);
                 if(q != null) return Math.abs(q);
             }
