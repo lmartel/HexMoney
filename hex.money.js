@@ -1,10 +1,4 @@
-d3.selection.prototype.moveToFront = function() {
-    return this.each(function(){
-        this.parentNode.appendChild(this);
-    });
-};
-
-var H$ = {};
+H$ = {};
 (function(){
     /**
      * Creates and initializes a hexagonal grid.
@@ -33,15 +27,17 @@ var H$ = {};
         this.grid = {};
         this.patterns = {};
 
-        var defs = d3.select("." + klass + " defs");
-        if(defs.size() === 0) d3.select("." + klass).append("svg:defs");
+        this.initialize();
     };
     (function(){
+
+        /* Blank function, d3 functionality injected on client side */
+        function HexGrid_initialize_placeholder(){}
 
         function HexGrid_add(q, r){
             var coords = new Point(q, r);
             if(this.grid[coords] != null) throw "exception: attempting to add a duplicate hexagon!";
-            this.grid[coords] = new Hexagon(this, axialToPixel(this, q, r), coords);
+            this.grid[coords] = new H$.Hexagon(this, axialToPixel(this, q, r), coords);
             return this.grid[coords];
         }
 
@@ -56,7 +52,7 @@ var H$ = {};
                     var q = cq + dx;
                     var r = cr + dz;
                     var coords = new Point(q, r);
-                    this.grid[coords] = new Hexagon(this, axialToPixel(this, q, r), coords);
+                    this.grid[coords] = new H$.Hexagon(this, axialToPixel(this, q, r), coords);
                 }
             }
             return this.grid[new Point(cq, cr)];
@@ -65,7 +61,7 @@ var H$ = {};
         function HexGrid_addMany(pairs){
             for (var i = 0; i < pairs.length; i++){
                 var coords = new Point(pairs[i][0], pairs[i][1]);
-                this.grid[coords] = new Hexagon(this, axialToPixel(this, coords.x(), coords.y()), coords);
+                this.grid[coords] = new H$.Hexagon(this, axialToPixel(this, coords.x(), coords.y()), coords);
             }
             return this;
         }
@@ -98,16 +94,19 @@ var H$ = {};
         // Centered automatically when rendered. Cap size at hex size.
         // Should probably make Asset a public class.
 
+        /* Placeholder function -- client-only code injected here */
+        function HexGrid_initNewBackgroundImage_placeholder(){}
+
         function HexGrid_preloadBackgroundImage(path){
             if(this.patterns[path] === undefined){
-                initNewBackgroundImage(this, path);
+                this.initNewBackgroundImage(path);
             }
             return this;
         }
 
         function HexGrid_setGlobalBackgroundImage(path){
             if(this.patterns[path] === undefined){
-                initNewBackgroundImage(this, path);
+                this.initNewBackgroundImage(path);
             }
             for (var pointStr in this.grid){
                 if(!this.grid.hasOwnProperty(pointStr)) continue;
@@ -144,6 +143,8 @@ var H$ = {};
         //TODO: set gridline colors, both globally and individually (for walls etc)
 
         H$.HexGrid.prototype = {
+            initialize: HexGrid_initialize_placeholder,
+            initNewBackgroundImage: HexGrid_initNewBackgroundImage_placeholder,
             add: HexGrid_add,
             addMegahex: HexGrid_addMegahex,
             addMany: HexGrid_addMany,
@@ -261,7 +262,7 @@ var H$ = {};
      * @param coords
      * @constructor
      */
-    var Hexagon = function(grid, c, coords) {
+    H$.Hexagon = function(grid, c, coords) {
         this.grid = grid;
 
         function Hexagon_center(){ return c; }
@@ -281,7 +282,7 @@ var H$ = {};
         function Hexagon_vertices(){
             // Sets up the vertices
             var s = this.size();
-            var r = calcR(s);
+            var r = H$.Util.calcR(s);
             var h = s / 2;
             var c = this.center();
             //calculate all vertices by offset from center, starting at top and going clockwise
@@ -301,7 +302,7 @@ var H$ = {};
         }
 
         function Hexagon_width(){
-            return 2 * calcR(this.size());
+            return 2 * H$.Util.calcR(this.size());
         }
 
         function Hexagon_size(){
@@ -316,56 +317,9 @@ var H$ = {};
             return this.grid.getDOMClass() + "-" + this.center().toString().replace(",", "-");
         }
 
-        // Private helper
-        var calcAssetX = function(hex, asset){
-            return hex.center().x() - (asset.width() / 2.0);
-        };
-
-        // Private helper
-        var calcAssetY = function(hex, asset){
-            return hex.center().y() - (asset.height() / 2.0);
-        };
-
-        function Hexagon_detachDrawnAsset(){
-            var assetClass = this.getHexClass() + Asset.CSS_SUFFIX;
-            d3.select("." + assetClass)
-                .attr("class", assetClass + "-detached")
-            var asset = this.payload.getAsset();
-            this.payload.setAsset(null);
-            return asset;
-        }
-
-        function Hexagon_draw(){
-            d3.select("." + this.getHexClass()).remove();
-            d3.select("." + this.getGridClass()).append("svg:polygon")
-                .attr("class", this.getHexClass())
-                .attr("points", this.vertices().join(" "))
-                .style("stroke", "black")
-                .style("fill", (this.fill != null ? this.fill : "none"));
-
-            var assetClass = this.getHexClass() + Asset.CSS_SUFFIX;
-            var asset = this.payload.asset;
-            d3.select("." + assetClass).remove();
-            if(asset != null){
-                d3.select("." + this.getGridClass()).append("svg:image")
-                    .attr("class", assetClass)
-                    .attr("xlink:href", asset.path())
-                    .attr("width", asset.width())
-                    .attr("height", asset.height())
-                    .attr("x", calcAssetX(this, asset))
-                    .attr("y", calcAssetY(this, asset));
-            }
-            return this;
-        }
-
-        function Hexagon_undraw(){
-            d3.select("." + this.getHexClass()).remove();
-            d3.select("." + this.getHexClass() + Asset.CSS_SUFFIX).remove();
-        }
-
         function Hexagon_setBackgroundImage(path){
             if(this.grid.patterns[path] === undefined){
-                initNewBackgroundImage(this.grid, path);
+                this.grid.initNewBackgroundImage(path);
             }
             this.fill = "url(#" + this.grid.patterns[path] + ")";
             return this;
@@ -392,40 +346,13 @@ var H$ = {};
 
         /**
          * A shortcut function that clears the hexagon's payload,
-         * redraws it (unless false is passed as a parameter),
-         * and returns the payload. Convenient for "move"
+         * and returns it. Convenient for "move"
          * actions in games.
          */
-        function Hexagon_popPayload(redraw){
-            redraw = redraw || true;
+        function Hexagon_popPayload(){
             var payload = this.payload;
             this.payload = new Payload(null, null);
-            if(redraw) this.draw();
             return payload;
-        }
-
-        function Hexagon_movePayload(targetHex, options){
-            var currentHex = this;
-            options = options || {};
-            duration = options["duration"] || Asset.DEFAULT_ANIMATION_DURATION;
-            var assetClass = this.getHexClass() + Asset.CSS_SUFFIX;
-            var asset = this.payload.getAsset();
-
-            targetHex.setPayload(this.payload);
-            if(currentHex != targetHex) currentHex.payload = new Payload(null, null);
-
-            d3.select("." + assetClass)
-                .moveToFront()
-                .transition()
-                .duration(duration)
-                .attr("x", calcAssetX(targetHex, asset))
-                .attr("y", calcAssetY(targetHex, asset))
-                .each("end", function(){
-                    targetHex.draw();
-                    currentHex.draw();
-                    if(options["callback"] != undefined) options["callback"](targetHex);
-                });
-            return targetHex;
         }
 
         // Private helper
@@ -469,28 +396,25 @@ var H$ = {};
             return null;
         }
 
-        Hexagon.prototype = {
+        H$.Hexagon.prototype = {
             vertices: Hexagon_vertices,
             height: Hexagon_height,
             width: Hexagon_width,
             size: Hexagon_size,
             getGridClass: Hexagon_getGridClass,
             getHexClass: Hexagon_getHexClass,
-            detachDrawnAsset: Hexagon_detachDrawnAsset,
-            draw: Hexagon_draw,
-            undraw: Hexagon_undraw,
             setBackgroundImage: Hexagon_setBackgroundImage,
             setBackgroundColor: Hexagon_setBackgroundColor,
             getPayload: Hexagon_getPayload,
             getPayloadData: Hexagon_getPayloadData,
             setPayload: Hexagon_setPayload,
             popPayload: Hexagon_popPayload,
-            movePayload: Hexagon_movePayload,
             getNeighbor: Hexagon_getNeighbor,
             getNeighbors: Hexagon_getNeighbors,
             getDirectionTo: Hexagon_getDirectionTo,
             getStraightLineDistanceTo: Hexagon_getStraightLineDistanceTo
-        }
+        };
+
     })();
 
     /**
@@ -558,36 +482,17 @@ var H$ = {};
 
     /* End helper classes */
     /* Begin misc utilities */
-
-    var SIZEOF = function(obj){
-        var size = 0;
-        for(var key in obj){
-            if(obj.hasOwnProperty(key)) size++;
+    H$.Util = {
+        sizeof: function(obj){
+            var size = 0;
+            for(var key in obj){
+                if(obj.hasOwnProperty(key)) size++;
+            }
+            return size;
+        },
+        calcR: function(s){
+            return Math.cos(Math.PI / 6.0) * s;
         }
-        return size;
-    };
-
-    var calcR = function(s){
-        return Math.cos(Math.PI / 6.0) * s;
-    };
-
-    var initNewBackgroundImage = function (grid, path){
-        // Generate unique id for new pattern
-        var id = grid.getDOMClass() + "-bg-" + (SIZEOF(grid.patterns) + 1);
-        var s = grid.getHexagonSize();
-        d3.select("." + grid.getDOMClass() + " defs")
-            .append("svg:pattern")
-            .attr("id", id)
-            .attr("width", 1)
-            .attr("height", 1)
-            .append("svg:image")
-            .attr("xlink:href", path)
-            // Centers a square background in the hexagon
-            .attr("x", (calcR(s) - s))
-            .attr("y", 0)
-            .attr("width", s * 2)
-            .attr("height", s * 2);
-        grid.patterns[path] = id;
     };
 
     var DIRECTION = {
@@ -613,4 +518,126 @@ var H$ = {};
 
     /* End utilities */
 
+})();
+
+/**
+ * What follows is code for rendering and manipulating the grid in an svg canvas.
+ * This code is only used on the client-side.
+ */
+(function(){
+    if(typeof window === "object") loadClientCode();
+
+    function loadClientCode(){
+        // d3 extensions
+        d3.selection.prototype.moveToFront = function() {
+            return this.each(function(){
+                this.parentNode.appendChild(this);
+            });
+        };
+
+        // Private helpers and utilities
+        var calcAssetX = function(hex, asset){
+            return hex.center().x() - (asset.width() / 2.0);
+        };
+
+        var calcAssetY = function(hex, asset){
+            return hex.center().y() - (asset.height() / 2.0);
+        };
+
+        //Begin client-side code injection
+
+        H$.HexGrid.prototype.initialize = HexGrid_initialize_client;
+        function HexGrid_initialize_client(){
+            var klass = this.getDOMClass();
+            var defs = d3.select("." + klass + " defs");
+            if(defs.length === 0) d3.select("." + klass).append("svg:defs");
+        }
+
+
+        H$.HexGrid.prototype.initNewBackgroundImage = HexGrid_initNewBackgroundImage_client;
+        function HexGrid_initNewBackgroundImage_client(path){
+            // Generate unique id for new pattern
+            var id = this.getDOMClass() + "-bg-" + (H$.Util.sizeof(this.patterns) + 1);
+            var s = this.getHexagonSize();
+            d3.select("." + this.getDOMClass() + " defs")
+                .append("svg:pattern")
+                .attr("id", id)
+                .attr("width", 1)
+                .attr("height", 1)
+                .append("svg:image")
+                .attr("xlink:href", path)
+                // Centers a square background in the hexagon
+                .attr("x", (H$.Util.calcR(s) - s))
+                .attr("y", 0)
+                .attr("width", s * 2)
+                .attr("height", s * 2);
+            this.patterns[path] = id;
+        }
+
+        H$.Hexagon.prototype.detachDrawnAsset = Hexagon_detachDrawnAsset;
+        function Hexagon_detachDrawnAsset(){
+            var assetClass = this.getHexClass() + Asset.CSS_SUFFIX;
+            d3.select("." + assetClass)
+                .attr("class", assetClass + "-detached");
+            var asset = this.payload.getAsset();
+            this.payload.setAsset(null);
+            return asset;
+        }
+
+        H$.Hexagon.prototype.draw = Hexagon_draw;
+        function Hexagon_draw(){
+            d3.select("." + this.getHexClass()).remove();
+            d3.select("." + this.getGridClass()).append("svg:polygon")
+                .attr("class", this.getHexClass())
+                .attr("points", this.vertices().join(" "))
+                .style("stroke", "black")
+                .style("fill", (this.fill != null ? this.fill : "none"));
+
+            var assetClass = this.getHexClass() + H$.Asset.CSS_SUFFIX;
+            var asset = this.payload.asset;
+            d3.select("." + assetClass).remove();
+            if(asset != null){
+                d3.select("." + this.getGridClass()).append("svg:image")
+                    .attr("class", assetClass)
+                    .attr("xlink:href", asset.path())
+                    .attr("width", asset.width())
+                    .attr("height", asset.height())
+                    .attr("x", calcAssetX(this, asset))
+                    .attr("y", calcAssetY(this, asset));
+            }
+            return this;
+        }
+
+        H$.Hexagon.prototype.undraw = Hexagon_undraw;
+        function Hexagon_undraw(){
+            d3.select("." + this.getHexClass()).remove();
+            d3.select("." + this.getHexClass() + H$.Asset.CSS_SUFFIX).remove();
+        }
+
+        H$.Hexagon.prototype.movePayload = Hexagon_movePayload;
+        function Hexagon_movePayload(targetHex, options){
+            var currentHex = this;
+            options = options || {};
+            duration = options["duration"] || H$.Asset.DEFAULT_ANIMATION_DURATION;
+            var assetClass = this.getHexClass() + H$.Asset.CSS_SUFFIX;
+            var asset = this.payload.getAsset();
+
+            targetHex.setPayload(this.payload);
+            if(currentHex != targetHex) currentHex.payload = new H$.Payload(null, null);
+
+            d3.select("." + assetClass)
+                .moveToFront()
+                .transition()
+                .duration(duration)
+                .attr("x", calcAssetX(targetHex, asset))
+                .attr("y", calcAssetY(targetHex, asset))
+                .each("end", function(){
+                    targetHex.draw();
+                    currentHex.draw();
+                    if(options["callback"] != undefined) options["callback"](targetHex);
+                });
+            return targetHex;
+        }
+
+    }
 })();
