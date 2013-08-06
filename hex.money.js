@@ -675,7 +675,7 @@ H$ = {};
 
         H$.Hexagon.prototype.detachDrawnAsset = Hexagon_detachDrawnAsset;
         function Hexagon_detachDrawnAsset(){
-            var assetClass = this.getHexClass() + Asset.CSS_SUFFIX;
+            var assetClass = this.getHexClass() + H$.Asset.CSS_SUFFIX;
             d3.select("." + assetClass)
                 .attr("class", assetClass + "-detached");
             var asset = this.payload.getAsset();
