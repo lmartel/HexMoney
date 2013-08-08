@@ -102,11 +102,18 @@ H$ = {};
                 return this.grid[new Point(cq, cr)];
             }
 
+            /**
+             * A shortcut to create a large grid with customized background images per-hex.
+             * @param data     [ [x, y, bgimage]... ]   bgimage is optional for each hex
+             * @type {Function}
+             */
             H$.HexGrid.prototype.addMany = HexGrid_addMany;
-            function HexGrid_addMany(pairs){
-                for (var i = 0; i < pairs.length; i++){
-                    var coords = new Point(pairs[i][0], pairs[i][1]);
-                    this.grid[coords] = new H$.Hexagon(this, axialToPixel(this, coords.x(), coords.y()), coords);
+            function HexGrid_addMany(data){
+                for (var i = 0; i < data.length; i++){
+                    var datum = data[i]
+                    var coords = new Point(datum[0], datum[1]);
+                    this.grid[coords] = (new H$.Hexagon(this, axialToPixel(this, coords.x(), coords.y()), coords));
+                    if(datum[2]) this.grid[coords].setBackgroundImage(datum[2]);
                 }
                 return this;
             }
@@ -173,8 +180,19 @@ H$ = {};
                 return this.grid[coords]
             }
 
+            /**
+             * Returns the hexagon found at the given relative coordinates--
+             * assuming the top left corner of the SVG board is (0,0).
+             * @param x             array [x,y] of coordinates, OR first coordinate
+             * @param y (optional)  second coordinate
+             * @type {Function}
+             */
             H$.HexGrid.prototype.getAt = HexGrid_getAt;
             function HexGrid_getAt(x, y){
+                if(!y){
+                    y = x[1];
+                    x = x[0];
+                }
                 x -= this.getCenter().x();
                 y -= this.getCenter().y();
                 var q = (1/3 * Math.sqrt(3) * x - 1/3 * y) / this.getHexagonSize();
@@ -364,7 +382,11 @@ H$ = {};
             }
 
             function Hexagon_setBackgroundImage(path){
-                if(this.grid.patterns[path] === undefined){
+                if(path === null){
+                    this.fill = null;
+                    return this;
+                }
+                if(!this.grid.patterns[path]){
                     this.grid.initNewBackgroundImage(path);
                 }
                 this.fill = "url(#" + this.grid.patterns[path] + ")";
@@ -530,6 +552,7 @@ H$ = {};
 
         /* Begin misc utilities */
         H$.Util = {};
+        //TODO: separate private and public utilities
         H$.Util.sizeof = function(obj){
             var size = 0;
             for(var key in obj){
@@ -541,6 +564,12 @@ H$ = {};
         H$.Util.calcR = function(s){
             return Math.cos(Math.PI / 6.0) * s;
         };
+
+        H$.Util.relativeCoordsFromClick= function(klass, click){
+            var board = d3.select("." + klass)[0][0];
+            return [click.pageX - board.offsetLeft, click.pageY - board.offsetTop];
+        };
+
 
         var DIRECTION = {
             NE: { value: 0, name: "Northeast", offset: new Point(1, -1) },
@@ -567,18 +596,33 @@ H$ = {};
 
     }
 
-    // TODO: differ:
-    // create Action package
-    // call methods on it (loads them into closure)
-    // HexGrid.apply(action) executes
-    // just send the action through the wire
-    // If any arguments are actions, execute them first
-
     function loadMetaclasses(){
         H$.Action = function(obj){
-            this.steps = [];
-            this.root = obj;
+            if(obj instanceof H$.HexGrid){
+                this.steps = [];
+                this.root = obj;
+            } else if(obj instanceof H$.Hexagon){
+                var loc = obj.getLocation();
+                return new H$.Action(obj.grid).get(loc.x(), loc.y());
+            } else throw "exception: H$.Action doesn't support mocking objects of that type";
         };
+
+        H$.Action.$deserialize = Action_deserialize;
+        function Action_deserialize(root, json){
+            return fromRaw(JSON.parse(json));
+
+            function fromRaw(raw){
+                var action = root.action();
+                action.steps = raw.steps;
+                for(var i = 0; i < action.steps.length; i++){
+                    var args = action.steps[i][2];
+                    for(var j = 0; j < args.length; j++){
+                        if(args[j].hasOwnProperty("root")) args[j] = fromRaw(args[j]);
+                    }
+                }
+                return action;
+            }
+        }
 
         H$.Action.prototype.$exec = Action_exec;
         function Action_exec(){
@@ -593,10 +637,7 @@ H$ = {};
             }, this.root);
         }
 
-        // TODO: add Hexagon methods (and think about how to structure to allow for descriptive errors)
-        // test out nested actions
-        // improve/think about chainability
-        //var classes = [H$.HexGrid.prototype, H$.Hexagon.prototype];
+        // TODO: serialize Hexagon objects as a board.get call
         var classes = ["HexGrid", "Hexagon"];
         for(var i = 0; i < classes.length; i++){
             var klass = classes[i];
@@ -606,14 +647,15 @@ H$ = {};
                 if(H$.Action.prototype[fnName]) throw "exception: repeat function name in Action. ABANDON SHIP!";
                 H$.Action.prototype[fnName] = function(k, f){
                     return function(){
-                        this.steps.push([k, f, arguments]);
+                        this.steps.push([k, f, Array.prototype.slice.call(arguments)]);
                         return this;
                     }
                 }(klass, fnName);
             }
             H$[klass].prototype.action = Action_factory;
-            function Action_factory(){
-                return new H$.Action(this);
+            function Action_factory(json){
+                if(json) return H$.Action.$deserialize(this, json);
+                else return new H$.Action(this);
             }
         }
 
