@@ -10,7 +10,12 @@
         <h2>Click the board below to change your selection. The * denotes the origin at axial coordinates (0,0).</h2>
         <h3>Use this code to quickly add the currently selected hexagons to a HexGrid:</h3>
         <textarea class="result-code" rows="8"></textarea>
-        <br>
+        <div class="background">
+            <p>Whatever's in here <input type="text" class="background-path"> when you click will be used as a background image for that hex (leave blank for none).
+                <br>
+                Both urls (http://www.foopictures.com/mine.jpg) and relative paths (images/mine.jpg) work, but to see a preview here you have to use a url--we don't know where "images" is!
+            </p>
+        </div>
         <svg width="700" height="700" class="demo-svg"></svg>
         <svg width="700" height="700" class="result-svg"></svg>
         <footer>
