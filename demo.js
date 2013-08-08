@@ -33,10 +33,13 @@ function demo(){
         // Chop that first comma
         coords = coords.replace(",", "");
         d3.select(".result-code")
-            .text(bgDeclarations + prefix + coords + suffix);
+            .property("value", bgDeclarations + prefix + coords + suffix);
     };
     emitCode();
 
+    d3.select(".result-code").on("click", function(){
+        if(document.getSelection().toString().length === 0) this.select();
+    });
     d3.select("." + demoGrid.getDOMClass()).on("click", function(){
         var click = d3.mouse(this);
         var clicked = demoGrid.getAt(click[0], click[1]);
