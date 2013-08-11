@@ -26,9 +26,11 @@ function demo(){
         if(raw.length < 2) bgs = [];
         else{
             bgs = raw.slice(0, -1).map(function(line){
-                var quote = line.indexOf('"');
+                var afterQuote = line.indexOf('"') + 1;
+                // Add the variable name to the vars list
                 vars.push(line.split("var ")[1].split(" =")[0]);
-                return line.substr(quote, line.lastIndexOf('"') - quote + 1);
+                // Substr between the quotes (exclusive) to get the background url/path
+                return line.substr(afterQuote, line.lastIndexOf('"') - afterQuote);
             });
         }
 
