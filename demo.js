@@ -38,9 +38,10 @@ function demo(){
 
         for(var i = 0; i < bgs.length; i++){
             // Replace all
-            cmd = cmd.split(vars[i]).join(bgs[i]);
+            cmd = cmd.split(vars[i]).join('"' + bgs[i] + '"');
         }
         cmd = cmd.substr(cmd.indexOf("["), cmd.lastIndexOf("]") - cmd.indexOf("[") + 1);
+        console.log(cmd);
         var data = JSON.parse(cmd);
 
         demoGrid.setGlobalBackgroundColor("white").drawAll();
